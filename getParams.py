@@ -3,6 +3,7 @@
 
 import requests  
 from bs4 import BeautifulSoup
+import csv
 import sys
 reload(sys)
 sys.setdefaultencoding( "utf-8" )
@@ -108,3 +109,8 @@ if pageLenInfo > 2:
             moiveName = soup1.find('div',attrs={'class','title'}).find('a').string
             listMoivesName.append(listMoivesName)
             print moiveName
+
+with open("1.csv","w") as csvFile:
+     writer = csv.writer(csvFile)
+     writer.writerow(["1","2","3","4"])
+     writer.writerows([listPersonStars,listPersonCommit,allStars,listMoivesName])
