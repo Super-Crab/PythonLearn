@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #coding:utf-8
-
+import codecs
 import requests  
 from bs4 import BeautifulSoup
 import csv
@@ -13,6 +13,23 @@ def save_to_file(file_name, contents):
     fh.write(contents)
     fh.close()
 
+def paramAnalysis( item ):
+    listSingle = []
+
+    personStar = item.string
+    personCommit = item.parent.contents[3].string
+
+    soup1 = item .findParent('div',attrs={'class','mod'})
+    
+    allStars = soup1.find('strong',attrs={'class','rating_num'}).string
+    moiveName = soup1.find('div',attrs={'class','title'}).find('a').string
+
+    listSingle.append(personStar)
+    listSingle.append(personCommit)
+    listSingle.append(allStars)
+    listSingle.append(moiveName)
+
+    return listSingle
 
 
 f=open('cookies.txt','r')
@@ -23,10 +40,10 @@ for line in f.read().split(';'):
     cookies[name]=value 
 
 
-# captcha = raw_input('please input the params:')
+captcha = raw_input('please input the params:')
 
-# url = "https://www.douban.com/people/%s/statuses"%(captcha)
-url = "https://www.douban.com/people/34316735/statuses"
+url = "https://www.douban.com/people/%s/statuses"%(captcha)
+# url = "https://www.douban.com/people/34316735/statuses"
 
 print url
 
@@ -37,80 +54,35 @@ res=requests.get(url,cookies=cookies)
 
 page = res.text
 soup = BeautifulSoup(page,"html.parser")
-pageLen = soup.find('span',attrs={'class':'thispage'})
-
 result = soup.findAll('span',attrs={'class':'rating-stars'})
 
 print len(result)
-
-#个人星级评分
-listPersonStars = []
-#个人评语
-listPersonCommit = []
-#总体的分数
-listAllStars = []
-#电影名字
-listMoivesName = []
-
+listAll = []
 for item in result:
+    listAll.append(paramAnalysis(item))
 
-    personStar = item.string
-    listPersonStars.append(personStar)
-    print personStar
+# 判断时候需要下一页
+pageLen = soup.find('span',attrs={'class':'thispage'})
+if pageLen is not None: 
+    pageLenInfo = int(pageLen['data-total-page'])
 
-    personCommit = item.parent.contents[3].string
-    listPersonCommit.append(personCommit)
-    print personCommit
+    if pageLenInfo > 2:
+        for i in range (2,pageLenInfo + 1):
 
-    soup1 = item .findParent('div',attrs={'class','mod'})
-    
-    allStars = soup1.find('strong',attrs={'class','rating_num'}).string
-    listAllStars.append(allStars)
-    print allStars
+            nextUrl = url + "?p=" + bytes(i) 
+            nextRes=requests.get(nextUrl,cookies=cookies)
 
-    moiveName = soup1.find('div',attrs={'class','title'}).find('a').string
-    listMoivesName.append(listMoivesName)
-    print moiveName
+            nextPage = nextRes.text
+            nextSoup = BeautifulSoup(nextPage,"html.parser")
 
+            nextResult = []
+            nextResult = nextSoup.findAll('span',attrs={'class':'rating-stars'})
+            for item in nextResult:            
+                listAll.append(paramAnalysis(item))
+         
 
-
-
-pageLenInfo = int(pageLen['data-total-page'])
-
-if pageLenInfo > 2:
-    for i in range (2,pageLenInfo + 1):
-        nextResult = []
-        print i
-        nextUrl = url + "?p=" + bytes(i) 
-        print nextUrl
-        nextRes=requests.get(nextUrl,cookies=cookies)
-
-        nextPage = nextRes.text
-        nextSoup = BeautifulSoup(nextPage,"html.parser")
-
-        nextResult = nextSoup.findAll('span',attrs={'class':'rating-stars'})
-        print nextUrl
-        for item in nextResult:
-
-            personStar = item.string
-            listPersonStars.append(personStar)
-            print personStar
-
-            personCommit = item.parent.contents[3].string
-            listPersonCommit.append(personCommit)
-            print personCommit
-
-            soup1 = item .findParent('div',attrs={'class','mod'})
-            
-            allStars = soup1.find('strong',attrs={'class','rating_num'}).string
-            listAllStars.append(allStars)
-            print allStars
-
-            moiveName = soup1.find('div',attrs={'class','title'}).find('a').string
-            listMoivesName.append(listMoivesName)
-            print moiveName
-
-with open("1.csv","w") as csvFile:
-     writer = csv.writer(csvFile)
-     writer.writerow(["1","2","3","4"])
-     writer.writerows([listPersonStars,listPersonCommit,allStars,listMoivesName])
+with open(bytes(captcha) + ".csv","w") as csvFile:
+     csvFile.write(codecs.BOM_UTF8)
+     writer = csv.writer(csvFile,dialect='excel')
+     writer.writerow(["个人星级","个人评论","总星级","电影名称及时间"])
+     writer.writerows(listAll)
