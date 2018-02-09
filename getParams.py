@@ -43,59 +43,81 @@ for line in f.read().split(';'):
     cookies[name]=value 
 
 
+pageNum = 20
 
 # 读取输入的作为用户账号
 # captcha = raw_input('please input the params:')
-for j in range (0,1000):
+for j in range (0,10):
 
-    
+    pageNum += 20
+    captcha = random.randint(1000000,9999999)
+    url_user = "https://movie.douban.com/subject/1292052/reviews?start=%s"%(pageNum)
 
-    captcha = random.randint(10000000,99999999)
-
-    url = "https://www.douban.com/people/%s/statuses"%(captcha)
-    # url = "https://www.douban.com/people/34316735/statuses"
-
-    print url
+    print url_user
 
     # 使用已经登陆的cookie进行操作
-    res=requests.get(url,cookies=cookies)  
+    res_user=requests.get(url_user,cookies=cookies)  
     # print res.content
 
-    # save_to_file('mobiles.txt', res.text)
 
-    page = res.text
-    soup = BeautifulSoup(page,"html.parser")
-    result = soup.findAll('span',attrs={'class':'rating-stars'})
+    page_user = res_user.text
+    soup_user = BeautifulSoup(page_user,"html.parser")
+    result = soup_user.findAll('a',attrs={'class':'avator'})
 
-    print len(result)
-    listAll = []
     for item in result:
-        listAll.append(paramAnalysis(item))
+        print item['href'].split('/')[4]
 
-    # 判断时候需要下一页
-    pageLen = soup.find('span',attrs={'class':'thispage'})
-    if pageLen is not None: 
-        pageLenInfo = int(pageLen['data-total-page'])
+        
+        captcha = item['href'].split('/')[4]
 
-        if pageLenInfo > 2:
-            for i in range (2,pageLenInfo + 1):
+        tim = random.randint(1,3)
+        time.sleep(tim)
 
-                nextUrl = url + "?p=" + bytes(i) 
-                nextRes=requests.get(nextUrl,cookies=cookies)
 
-                nextPage = nextRes.text
-                nextSoup = BeautifulSoup(nextPage,"html.parser")
+        url = "https://www.douban.com/people/%s/statuses"%(captcha)
+        # url = "https://www.douban.com/people/34316735/statuses"
 
-                nextResult = []
-                nextResult = nextSoup.findAll('span',attrs={'class':'rating-stars'})
-                for item in nextResult:            
-                    listAll.append(paramAnalysis(item))
+        print url
 
-    print listAll        
+        # 使用已经登陆的cookie进行操作
+        res=requests.get(url,cookies=cookies)  
+        # print res.content
 
-    if listAll:
-        with open(bytes(captcha) + ".csv","w") as csvFile:
-            csvFile.write(codecs.BOM_UTF8)
-            writer = csv.writer(csvFile,dialect='excel')
-            writer.writerow(["个人星级","个人评论","总星级","电影名称及时间"])
-            writer.writerows(listAll)
+        save_to_file('list.txt', res.text)
+
+        page = res.text
+        soup = BeautifulSoup(page,"html.parser")
+        result = soup.findAll('span',attrs={'class':'rating-stars'})
+
+        print len(result)
+        listAll = []
+        for item in result:
+            listAll.append(paramAnalysis(item))
+
+        # 判断时候需要下一页
+        pageLen = soup.find('span',attrs={'class':'thispage'})
+        if pageLen is not None: 
+            pageLenInfo = int(pageLen['data-total-page'])
+
+            if pageLenInfo > 2:
+                for i in range (2,pageLenInfo + 1):
+
+                    nextUrl = url + "?p=" + bytes(i) 
+                    nextRes=requests.get(nextUrl,cookies=cookies)
+
+                    nextPage = nextRes.text
+                    nextSoup = BeautifulSoup(nextPage,"html.parser")
+
+                    nextResult = []
+                    nextResult = nextSoup.findAll('span',attrs={'class':'rating-stars'})
+                    for item in nextResult:            
+                        listAll.append(paramAnalysis(item))
+
+        print listAll        
+
+        if listAll:
+            with open(bytes(captcha) + ".csv","w") as csvFile:
+                csvFile.write(codecs.BOM_UTF8)
+                writer = csv.writer(csvFile,dialect='excel')
+                writer.writerow(["个人星级","个人评论","总星级","电影名称及时间"])
+                writer.writerows(listAll)
