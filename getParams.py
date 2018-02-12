@@ -43,7 +43,7 @@ for line in f.read().split(';'):
     cookies[name]=value 
 
 
-pageNum = 20
+pageNum = 60
 
 # 读取输入的作为用户账号
 # captcha = raw_input('please input the params:')
@@ -59,7 +59,6 @@ for j in range (0,10):
     res_user=requests.get(url_user,cookies=cookies)  
     # print res.content
 
-
     page_user = res_user.text
     soup_user = BeautifulSoup(page_user,"html.parser")
     result = soup_user.findAll('a',attrs={'class':'avator'})
@@ -70,7 +69,7 @@ for j in range (0,10):
         
         captcha = item['href'].split('/')[4]
 
-        tim = random.randint(1,3)
+        tim = random.randint(6,10)
         time.sleep(tim)
 
 
@@ -83,41 +82,47 @@ for j in range (0,10):
         res=requests.get(url,cookies=cookies)  
         # print res.content
 
-        save_to_file('list.txt', res.text)
+        save_to_file(bytes(captcha)+'.txt', res.text)
 
         page = res.text
         soup = BeautifulSoup(page,"html.parser")
         result = soup.findAll('span',attrs={'class':'rating-stars'})
 
-        print len(result)
-        listAll = []
-        for item in result:
-            listAll.append(paramAnalysis(item))
+        # 经抓包发现 豆瓣存在两种用户的评论  一种必须有星级  一种没有  此处取必须有星级的
+        if result is not None:
 
-        # 判断时候需要下一页
-        pageLen = soup.find('span',attrs={'class':'thispage'})
-        if pageLen is not None: 
-            pageLenInfo = int(pageLen['data-total-page'])
+            print len(result)
+            listAll = []
+            for item in result:
+                listAll.append(paramAnalysis(item))
 
-            if pageLenInfo > 2:
-                for i in range (2,pageLenInfo + 1):
+            # 判断时候需要下一页
+            pageLen = soup.find('span',attrs={'class':'thispage'})
+            if pageLen is not None: 
+                pageLenInfo = int(pageLen['data-total-page'])
 
-                    nextUrl = url + "?p=" + bytes(i) 
-                    nextRes=requests.get(nextUrl,cookies=cookies)
+                if pageLenInfo > 2:
+                    for i in range (2,pageLenInfo + 1):
 
-                    nextPage = nextRes.text
-                    nextSoup = BeautifulSoup(nextPage,"html.parser")
+                        nexttim = random.randint(3,5)
+                        time.sleep(nexttim)
 
-                    nextResult = []
-                    nextResult = nextSoup.findAll('span',attrs={'class':'rating-stars'})
-                    for item in nextResult:            
-                        listAll.append(paramAnalysis(item))
+                        nextUrl = url + "?p=" + bytes(i) 
+                        nextRes=requests.get(nextUrl,cookies=cookies)
 
-        print listAll        
+                        nextPage = nextRes.text
+                        nextSoup = BeautifulSoup(nextPage,"html.parser")
 
-        if listAll:
-            with open(bytes(captcha) + ".csv","w") as csvFile:
-                csvFile.write(codecs.BOM_UTF8)
-                writer = csv.writer(csvFile,dialect='excel')
-                writer.writerow(["个人星级","个人评论","总星级","电影名称及时间"])
-                writer.writerows(listAll)
+                        nextResult = []
+                        nextResult = nextSoup.findAll('span',attrs={'class':'rating-stars'})
+                        for item in nextResult:            
+                            listAll.append(paramAnalysis(item))
+
+            print listAll        
+
+            if listAll:
+                with open(bytes(captcha) + ".csv","w") as csvFile:
+                    csvFile.write(codecs.BOM_UTF8)
+                    writer = csv.writer(csvFile,dialect='excel')
+                    writer.writerow(["个人星级","个人评论","总星级","电影名称及时间"])
+                    writer.writerows(listAll)
