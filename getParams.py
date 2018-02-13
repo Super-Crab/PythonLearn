@@ -43,15 +43,15 @@ for line in f.read().split(';'):
     cookies[name]=value 
 
 
-pageNum = 60
+pageNum = 200
 
 # 读取输入的作为用户账号
 # captcha = raw_input('please input the params:')
-for j in range (0,10):
+for j in range (0,100):
 
     pageNum += 20
     captcha = random.randint(1000000,9999999)
-    url_user = "https://movie.douban.com/subject/1292052/reviews?start=%s"%(pageNum)
+    url_user = "https://movie.douban.com/subject/20326665/reviews?start=%s"%(pageNum)
 
     print url_user
 
@@ -69,9 +69,11 @@ for j in range (0,10):
         
         captcha = item['href'].split('/')[4]
 
-        tim = random.randint(6,10)
+        tim = random.randint(8,13)
+        print 'sleep tim = '+ bytes(tim)
         time.sleep(tim)
 
+        
 
         url = "https://www.douban.com/people/%s/statuses"%(captcha)
         # url = "https://www.douban.com/people/34316735/statuses"
@@ -82,7 +84,7 @@ for j in range (0,10):
         res=requests.get(url,cookies=cookies)  
         # print res.content
 
-        save_to_file(bytes(captcha)+'.txt', res.text)
+        # save_to_file(bytes(captcha)+'.txt', res.text)
 
         page = res.text
         soup = BeautifulSoup(page,"html.parser")
@@ -100,13 +102,17 @@ for j in range (0,10):
             pageLen = soup.find('span',attrs={'class':'thispage'})
             if pageLen is not None: 
                 pageLenInfo = int(pageLen['data-total-page'])
+                
 
                 if pageLenInfo > 2:
                     for i in range (2,pageLenInfo + 1):
 
-                        nexttim = random.randint(3,5)
-                        time.sleep(nexttim)
+                        print 'current page = ' + bytes(i) + ' page count = ' + bytes(pageLenInfo + 1)
 
+                        nexttim = random.randint(8,13)
+                        print 'sleep tim = '+ bytes(nexttim)
+                        time.sleep(nexttim)
+                        
                         nextUrl = url + "?p=" + bytes(i) 
                         nextRes=requests.get(nextUrl,cookies=cookies)
 
@@ -118,7 +124,7 @@ for j in range (0,10):
                         for item in nextResult:            
                             listAll.append(paramAnalysis(item))
 
-            print listAll        
+            print '用户 ： '+ bytes(captcha) +' 总条数： '+len(listAll)        
 
             if listAll:
                 with open(bytes(captcha) + ".csv","w") as csvFile:
