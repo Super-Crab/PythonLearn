@@ -7,12 +7,19 @@ import random
 import time
 import codecs
 import csv
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 
 def saveFile(fileName, list):
-    with open("1.csv", "w", encoding='utf-8') as csvFile:
+    with open(fileName + ".csv", "w") as csvFile:
+        csvFile.write(codecs.BOM_UTF8)
         writer = csv.writer(csvFile, dialect='excel')
-        writer.writerows(list)
+        for item in list:
+            writer.writerow([item])
+        # writer.writerow(list)
 
 
 if __name__ == "__main__":
@@ -39,9 +46,6 @@ if __name__ == "__main__":
         print(info_url)
         response = http.request('GET', info_url, headers=head)
         info_data = json.loads(response.data.decode('utf-8'))
-        print(info_data)
-        print(list(info_data['item']['hashtag_list']))
-        print(info_data['item']['name'])
         nameList.append(info_data['item']['name'])
         itemLabel = list(info_data['item']['hashtag_list'])
         if itemLabel:
@@ -49,6 +53,8 @@ if __name__ == "__main__":
                 if label not in labelList:
                     labelList.append(label)
 
+
+        print(labelList)
         if nameList:
             saveFile("title", nameList)
         if labelList:
